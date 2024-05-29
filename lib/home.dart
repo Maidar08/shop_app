@@ -1,3 +1,5 @@
+
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop_app/provider/globalProvider.dart';
@@ -14,7 +16,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  Consumer<Global_provider>(
+    return  Consumer<GlobalProvider>(
     builder: (context, provider, child) {
     return Scaffold(
       body: Pages[provider.currentIndex],
@@ -24,11 +26,11 @@ class HomePage extends StatelessWidget {
         currentIndex: provider.currentIndex,
         onTap: provider.changeCurrentIdx,
         items: 
-          const [
-            BottomNavigationBarItem(icon: Icon(Icons.shop), label:'Shop'),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Basket'),
-            BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile")
+           [
+            BottomNavigationBarItem(icon: Icon(Icons.shop), label:'shop'.tr()),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'basket'.tr()),
+            BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'favorites'.tr()),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'profile'.tr())
           ]),
     );});
 } 

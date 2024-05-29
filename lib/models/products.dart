@@ -1,11 +1,8 @@
 import 'package:json_annotation/json_annotation.dart';
 
-/// This allows the `ProductModel` class to access private members in
-/// the generated file. The value for this is *.g.dart, where
-/// the star denotes the source file name.
 part 'products.g.dart';
 
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class ProductModel {
   final int? id;
   final String? title;
@@ -16,6 +13,7 @@ class ProductModel {
   final Rating? rating;
   bool isFavorite;
   int count;
+  List<CommentModel> comments;
 
   ProductModel({
     this.isFavorite = false,
@@ -27,28 +25,54 @@ class ProductModel {
     this.image,
     this.rating,
     this.count = 1,
-  });
+    List<CommentModel>? comments,
+  }) : comments = comments ?? [];
 
- 
-  ProductModel fromJson(Map<String, dynamic> json) {
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
     return _$ProductModelFromJson(json);
   }
-  
 
-  static List<ProductModel> fromList(List<dynamic> data) => data.map((e) => ProductModel().fromJson(e)).toList();
-  
   Map<String, dynamic> toJson() {
-    throw UnimplementedError();
+    return _$ProductModelToJson(this);
+  }
+
+    static List<ProductModel> fromList(List<dynamic> data) =>
+      data.map((e) => ProductModel.fromJson(e)).toList();
+
+  void addComment(CommentModel comment) {
+    comments.add(comment);
   }
 }
 
-@JsonSerializable(createToJson: false)
+@JsonSerializable()
 class Rating {
   double? rate;
   int? count;
 
   Rating({this.rate, this.count});
+
   factory Rating.fromJson(Map<String, dynamic> json) {
     return _$RatingFromJson(json);
   }
+
+  Map<String, dynamic> toJson() {
+    return _$RatingToJson(this);
+  }
 }
+
+@JsonSerializable()
+class CommentModel {
+  final String user;
+  final String comment;
+
+  CommentModel({required this.user, required this.comment});
+
+  factory CommentModel.fromJson(Map<String, dynamic> json) {
+    return _$CommentModelFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() {
+    return _$CommentModelToJson(this);
+  }
+}
+

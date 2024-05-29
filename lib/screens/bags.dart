@@ -1,130 +1,130 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop_app/models/products.dart';
-import 'package:shop_app/provider/globalProvider.dart'; 
+import 'package:shop_app/provider/globalProvider.dart';
 
 class Basket extends StatelessWidget {
   const Basket({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<Global_provider>(builder: (context, provider, child) {
-      double total = provider.cartItems
-          .fold(0, (sum, item) => sum + (item.price! * item.count));
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('cart'),
-        ),
-        body: provider.cartItems.isEmpty
-            ? const Center(
-                child: Text(
-                  "Cart Is Empty.",
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                ),
-              )
-            : ListView.builder(
-                itemCount: provider.cartItems.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.black12,
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Dismissible(
-                      // margin: const EdgeInsets.all(8.0),
-                      background: Container(
-                        color: Colors.red,
-                      ),
-                      key: ValueKey<ProductModel>(provider.cartItems[index]),
-                      onDismissed: (DismissDirection direction) {
-                        provider.removeCartItem(provider.cartItems[index]);
-                      },
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(8.0),
-                        leading: Image.network(
-                          provider.cartItems[index].image!,
-                          width: 50, // Adjust the width as needed
-                          height: 50, // Adjust the height as needed
-                        ),
-                        title: Text(provider.cartItems[index].title!),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.remove),
-                                      onPressed: () {
-                                        if (provider.cartItems[index].count >
-                                            1) {
-                                          provider.decrementCount(
-                                              provider.cartItems[index]);
-                                        } else if (provider
-                                                .cartItems[index].count ==
-                                            1) {
-                                          provider.removeCartItem(
-                                              provider.cartItems[index]);
-                                          //notifier
-                                        }
-                                      },
-                                    ),
-                                    Text(
-                                      '${provider.cartItems[index].count}',
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.add),
-                                      onPressed: () {
-                                        provider.incrementCount(
-                                            provider.cartItems[index]);
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  '\$${provider.cartItems[index].price} x ${provider.cartItems[index].count}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${'total'}: \$${total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // Implement buy all logic
-                  // For example, you might want to navigate to a checkout page
-                  // or display a confirmation dialog.
-                },
-                child: Text('buy'),
-              ),
-            ],
+    return Consumer<GlobalProvider>(
+      builder: (context, provider, child) {
+        provider.fetchCart(provider.currentUser!.email); // Fetch cart data
+
+        double total = provider.cartItems.fold(
+          0, (sum, item) => sum + (item.price! * item.count)
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Basket'),
           ),
+          body: _buildCartBody(provider),
+          bottomNavigationBar: _buildBottomNavigationBar(context, total, provider),
+        );
+      },
+    );
+  }
+
+  Widget _buildCartBody(GlobalProvider provider) {
+    final cartItemsWithQuantity = provider.cartItems.where((item) => item.count > 0).toList();
+
+    return cartItemsWithQuantity.isEmpty
+        ? Center(
+            child: Text(
+              "Basket Is Empty.",
+              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+            ),
+          )
+        : ListView.builder(
+            itemCount: cartItemsWithQuantity.length,
+            itemBuilder: (context, index) {
+              return _buildCartItem(provider, index);
+            },
+          );
+  }
+
+  Widget _buildCartItem(GlobalProvider provider, int index) {
+    ProductModel item = provider.cartItems[index];
+
+    return Dismissible(
+      key: ValueKey<ProductModel>(item),
+      background: Container(color: Colors.red),
+      onDismissed: (direction) {
+        provider.removeCartItem(item, provider.currentUser!.email); // Remove item locally
+      },
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(8.0),
+        leading: Image.network(
+          item.image!,
+          width: 50,
+          height: 50,
         ),
-      );
-    });
+        title: Text(item.title!),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.remove),
+                      onPressed: () {
+                        provider.decrementCount(item);
+                        provider.removeFromCartFirestore(item, provider.currentUser!.email); // Update item in Firestore
+                      },
+                    ),
+                    Text('${item.count}'),
+                    IconButton(
+                      icon: Icon(Icons.add),
+                      onPressed: () {
+                        provider.incrementCount(item);
+                        provider.addToCartFirestore(item, provider.currentUser!.email); // Update item in Firestore
+                      },
+                    ),
+                  ],
+                ),
+                Text(
+                  '\$${item.price} x ${item.count}',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context, double total, GlobalProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total: \$${total.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await provider.postCart(); // Post cart and clear cart if successful
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Total price: \$${total.toStringAsFixed(2)}'), // Show snackbar with total price
+                ),
+              );
+            },
+            child: Text('Buy'),
+          ),
+        ],
+      ),
+    );
   }
 }

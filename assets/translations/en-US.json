@@ -1,0 +1,11 @@
+{
+    "shop": "Shop",
+    "basket": "Basket",
+    "favorites":"Favorites",
+    "profile": "Profile",
+    "changeLanguage": "Change Language",
+    "username": "Username:",
+    "email": "Email:",
+    "phone": "Phone:",
+    "logout": "Log out"
+}
